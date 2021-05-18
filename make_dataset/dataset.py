@@ -39,6 +39,19 @@ def _save_datasets(train, test, outdir: Path):
 @click.option('--in-csv')
 @click.option('--out-dir')
 def make_datasets(in_csv, out_dir):
+    """Processes csv file and saves a curated dataset to disk.
+
+    Parameters
+    ----------
+    in-csv: str
+        path to csv file in local disk
+    out_dir:
+        directory where files should be saved to.
+
+    Returns
+    -------
+    None
+    """
     log = logging.getLogger('make-dataset')
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
