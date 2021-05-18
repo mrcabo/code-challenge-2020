@@ -3,7 +3,9 @@ import dask.dataframe as dd
 import numpy as np
 from distributed import Client
 from pathlib import Path
+import logging
 
+logging.basicConfig(level=logging.INFO)
 
 def chunk(s):
     return s.value_counts()
@@ -37,16 +39,23 @@ def _save_datasets(train, test, outdir: Path):
 @click.option('--in-csv')
 @click.option('--out-dir')
 def make_datasets(in_csv, out_dir):
+    log = logging.getLogger('make-dataset')
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-
+    
     # Connect to the dask cluster
+    log.info(f'Starting make_datasets with in_csv: {in_csv} and out_dir: {out_dir}')
+    log.info('Connecting to cluster')
     c = Client('dask-scheduler:8786')
 
     # load data as a dask Dataframe if you have trouble with dask
     # please fall back to pandas or numpy
+    log.info('Reading csv file')
     ddf = dd.read_csv(in_csv, blocksize=1e6)
-
+   
+    log.info('ouput dataframe head')
+    log.info(ddf.head())
+    log.info('Trace 1')
     # we set the index so we can properly execute loc below
     ddf = ddf.set_index('Unnamed: 0')
 
@@ -57,6 +66,7 @@ def make_datasets(in_csv, out_dir):
     ddf['country'] = ddf['country'].fillna('Unknown')
     ddf['province'] = ddf['province'].fillna('Unknown')
     ddf['taster_name'] = ddf['taster_name'].fillna('Unknown')
+    log.info('Trace 2')
     # Fill region_1 missing values using the 'province' column.
     # Most common value for each province will be used. Rest are labeled Unknown
     mode = dd.Aggregation('mode', chunk, agg, finalize)
@@ -65,6 +75,7 @@ def make_datasets(in_csv, out_dir):
     ddf['region_1'] = ddf.apply(lambda x: most_common_region.loc[x.province, 'region_1']
                                 if x.province in most_common_region['region_1'].index
                                 else 'Unknown', axis=1).where(ddf['region_1'].isna(), ddf['region_1'])
+    log.info('Trace 3')
     # We fill price values with the province's average price. If that is
     # not available, we use the global average price
     mean_prices = ddf.groupby(['province'])['price'].mean().compute()
@@ -87,6 +98,7 @@ def make_datasets(in_csv, out_dir):
     # # Normalize price values
     # scaler = StandardScaler()
     # ddf['price'] = scaler.fit_transform(ddf[['price']]).price
+    log.info('dataset processed')
 
     # split dataset into train test feel free to adjust test percentage
     idx = np.arange(n_samples)

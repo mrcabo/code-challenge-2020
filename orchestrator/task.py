@@ -57,7 +57,7 @@ class DownloadData(DockerTask):
 
 class MakeDatasets(DockerTask):
 
-    out_dir = luigi.Parameter()
+    out_dir = luigi.Parameter(default='/usr/share/data/processed/')
 
     @property
     def image(self):
@@ -70,9 +70,18 @@ class MakeDatasets(DockerTask):
     def command(self):
         # TODO: implement correct command
         # Try to get the input path from self.requires() ;)
-        pass
+        in_csv = Path(self.requires().out_dir)
+        in_csv = str(in_csv/f'{self.requires().fname}.csv')
+        return [
+            'python', 'dataset.py',
+            '--in-csv', in_csv,
+            '--out-dir', self.out_dir
+        ]
 
     def output(self):
+        out_dir = Path(self.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        
         return luigi.LocalTarget(
             path=str(Path(self.out_dir) / '.SUCCESS')
         )
