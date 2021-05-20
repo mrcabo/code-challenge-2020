@@ -1,12 +1,12 @@
 
 # %%
-import logging
+# import logging
 from operator import length_hint
-from pathlib import Path
+# from pathlib import Path
 from distributed import Client
-import numpy as np
+# import numpy as np
 import dask.dataframe as dd
-import click
+# import click
 from sklearn.pipeline import make_pipeline
 from sklearn.compose import make_column_transformer
 # from make_dataset.dataset import chunk, agg, finalize, _save_datasets
@@ -40,7 +40,7 @@ X.head()
 
 # %%
 # Prepare data
-set_config(display='diagram')
+set_config(display='diagram')  # Allows us to visualize pipeline
 num_proc = make_pipeline(StandardScaler())
 cat_proc = make_pipeline(Categorizer(), DummyEncoder())
 cat_cols = X.columns.to_list()
@@ -61,5 +61,5 @@ cross_val_scores = cross_val_score(model, X.compute(), y.compute(), cv=5)
 # simple k-fold cross validation for loop but lets leave it unless I manage to
 # make docker-compose work properly
 
-#%%
-model.score(X,y)
+# %%
+model.score(X, y)
