@@ -68,8 +68,7 @@ def make_datasets(in_csv, out_dir):
     ddf = ddf.drop(['description', 'designation', 'region_2',
                     'taster_twitter_handle', 'title'], axis=1)
 
-    train, test = train_test_split(ddf, test_size=0.1,
-                                   random_state=0, shuffle=True)
+    train, test = train_test_split(ddf, test_size=0.1, shuffle=True)
 
     _save_datasets(train, test, out_dir)
 

@@ -40,7 +40,7 @@ def evaluate_model(in_data, in_model, out_dir):
     model = load(in_model)
     pd.set_option('display.precision', 2)
     # X.describe(include="all")
-    
+
     # Metrics
     d = {
         'R2': [r2_score(y, model.predict(X))],
@@ -50,19 +50,23 @@ def evaluate_model(in_data, in_model, out_dir):
     df = pd.DataFrame(d, index=['svr'])
     log.info(df)
 
-    # The permutation feature importance 
+    # The permutation feature importance
     r = permutation_importance(model, X, y,
                                n_repeats=30,
                                random_state=0)
 
-    for i in r.importances_mean.argsort()[::-1]:
-        if r.importances_mean[i] - 2 * r.importances_std[i] > 0:
-            log.info(f"{X.columns[i]:<14}"
-                     f"{r.importances_mean[i]:.3f}"
-                     f" ± {r.importances_std[i]:.3f}")
-
     # Plots
     out_path = Path(out_dir)
+
+    with open((out_path/'metrics.txt'), 'w') as f:
+        f.write("****Model metrics****\n")
+        f.write(df.to_string())
+        f.write("\n\n****Feature importance****\n")
+        for i in r.importances_mean.argsort()[::-1]:
+            if r.importances_mean[i] - 2 * r.importances_std[i] > 0:
+                f.write(f"{X.columns[i]:<14}"
+                        f"{r.importances_mean[i]:.3f}"
+                        f" ± {r.importances_std[i]:.3f}\n")
 
     fig, ax = plt.subplots(figsize=(5, 5))
     plt.scatter(y, model.predict(X))
