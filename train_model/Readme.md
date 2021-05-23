@@ -1,3 +1,3 @@
 # Train model
 
-This script will train a model and save it to disk.
+This script will train the model selected in the "model_selection" notebook and save it to disk.

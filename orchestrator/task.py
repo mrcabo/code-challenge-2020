@@ -56,6 +56,8 @@ class DownloadData(DockerTask):
 
 
 class MakeDatasets(DockerTask):
+    """Task to preprocess the dataset, 
+    split it into train/test and save to disk."""
 
     out_dir = luigi.Parameter(default='/usr/share/data/processed/')
 
@@ -81,7 +83,70 @@ class MakeDatasets(DockerTask):
     def output(self):
         out_dir = Path(self.out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
-        
+
+        return luigi.LocalTarget(
+            path=str(Path(self.out_dir) / '.SUCCESS')
+        )
+
+
+class TrainModel(DockerTask):
+    """Trains a SVM regressor using the training data. Then saves model to disk"""
+
+    out_dir = luigi.Parameter(default='/usr/share/data/model/')
+
+    @property
+    def image(self):
+        return f'code-challenge/train-model:{VERSION}'
+
+    def requires(self):
+        return MakeDatasets()
+
+    @property
+    def command(self):
+        data = str(Path(self.requires().out_dir) / 'train.parquet')
+        return [
+            'python', 'train_model.py',
+            '--in-data', data,
+            '--out-dir', self.out_dir
+        ]
+
+    def output(self):
+        out_dir = Path(self.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        return luigi.LocalTarget(
+            path=str(Path(self.out_dir) /'model.joblib')
+
+        )
+
+
+class EvaluateModel(DockerTask):
+    """Evaluates the selected trained model and plots the results"""
+
+    out_dir = luigi.Parameter(default='/usr/share/data/report/')
+
+    @property
+    def image(self):
+        return f'code-challenge/evaluate-model:{VERSION}'
+
+    def requires(self):
+        return TrainModel()
+
+    @property
+    def command(self):
+        model = str(Path(self.requires().out_dir) / 'model.joblib')
+        data = str(Path(self.requires().requires().out_dir) / 'test.parquet')  # for now
+        return [
+            'python', 'evaluate_model.py',
+            '--in-data', data,
+            '--in-model', model,
+            '--out-dir', self.out_dir
+        ]
+
+    def output(self):
+        out_dir = Path(self.out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+
         return luigi.LocalTarget(
             path=str(Path(self.out_dir) / '.SUCCESS')
         )

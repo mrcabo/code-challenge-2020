@@ -1,3 +1,4 @@
 click>=7.0
-# dask[complete]==2021.3.0
-# dask-ml
+pandas==1.2.4
+scikit-learn==0.24.2
+pyarrow==4.0.0
